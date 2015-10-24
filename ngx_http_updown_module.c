@@ -124,6 +124,7 @@ static int ngx_updown_status = 1;
 static ngx_int_t ngx_http_updown_handler_get (ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
   ngx_http_updown_loc_conf_t *conf;
+  ngx_int_t rc;
 
   conf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
   if (ngx_updown_status == 0) {
@@ -136,8 +137,8 @@ static ngx_int_t ngx_http_updown_handler_get (ngx_http_request_t *req) {
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   ngx_str_set(&req->headers_out.content_type, "text/html");
   ngx_http_send_header(req);
-  rc = ngx_http_send_header(r);
-  if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+  rc = ngx_http_send_header(req);
+  if (rc == NGX_ERROR || rc > NGX_OK || req->header_only) {
     return rc;
   }
 
@@ -173,11 +174,12 @@ static ngx_int_t ngx_http_updown_handler_post(ngx_http_request_t *req) {
   req->headers_out.status = 200;
   ngx_str_set(&req->headers_out.content_type, "text/html");
   rc = ngx_http_send_header(req);
-  if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+  if (rc == NGX_ERROR || rc > NGX_OK || req->header_only) {
     return rc;
   }
 
-  ngx_buf_t *b; b = ngx_pocalloc(req->pool, sizeof(ngx_buf_t));
+  ngx_buf_t *b; 
+  b = ngx_pcalloc(req->pool, sizeof(ngx_buf_t));
   if (b == NULL) {
     return NGX_HTTP_INTERNAL_SERVER_ERROR;
   }
@@ -209,7 +211,7 @@ static ngx_int_t ngx_http_updown_handler_delete(ngx_http_request_t *req) {
   req->headers_out.status = 200;
   ngx_str_set(&req->headers_out.content_type, "text/html");
   rc = ngx_http_send_header(req);
-  if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+  if (rc == NGX_ERROR || rc > NGX_OK || req->header_only) {
     return rc;
   }
 
@@ -231,9 +233,7 @@ static ngx_int_t ngx_http_updown_handler_delete(ngx_http_request_t *req) {
 static ngx_int_t ngx_http_updown_handler(ngx_http_request_t *req) {
   switch(req->method) {
     case NGX_HTTP_HEAD:
-      req->headers_out.status = NGX_HTTP_OK;
-      req->headers_out.content_length_n = content_length;
-      return ngx_http_send_header(r);
+      return NGX_DECLINED;
     case NGX_HTTP_GET:
       return ngx_http_updown_handler_get(req);
     case NGX_HTTP_POST:
