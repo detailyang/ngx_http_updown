@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-10-24 17:10:32
+* @Last Modified time: 2015-10-24 21:05:29
 */
 #include "ngx_http_updown_module.h"
 
@@ -105,7 +105,7 @@ static ngx_int_t ngx_http_updown_init(ngx_conf_t *cf) {
   ngx_http_handler_pt        *h;
   ngx_http_core_main_conf_t  *cmcf;
 
-  cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
+  cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_updown_module);
 
   h = ngx_array_push(&cmcf->phases[NGX_HTTP_CONTENT_PHASE].handlers);
   if (h == NULL) {
@@ -178,7 +178,7 @@ static ngx_int_t ngx_http_updown_handler_post(ngx_http_request_t *req) {
     return rc;
   }
 
-  ngx_buf_t *b; 
+  ngx_buf_t *b;
   b = ngx_pcalloc(req->pool, sizeof(ngx_buf_t));
   if (b == NULL) {
     return NGX_HTTP_INTERNAL_SERVER_ERROR;
