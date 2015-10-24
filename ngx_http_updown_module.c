@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-10-24 15:21:52
+* @Last Modified time: 2015-10-24 16:07:59
 */
 #include "ngx_http_updown_module.h"
 
@@ -128,10 +128,10 @@ static ngx_int_t ngx_http_updown_handler_get (ngx_http_request_t *req) {
   conf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
   if (ngx_updown_status == 0) {
     ngx_sprintf(ngx_response_body, "down");
-    req->headers_out.status = conf->down_code;
+    req->headers_out.status = (conf->down_code == NGX_CONF_UNSET ? DEFAULT_DOWN_CODE: conf->down_code);
   } else {
     ngx_sprintf(ngx_response_body, "up");
-    req->headers_out.status = conf->up_code;
+    req->headers_out.status = (conf->up_code == NGX_CONF_UNSET ? DEFAULT_UP_CODE : conf->up_code);
   }
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   ngx_str_set(&req->headers_out.content_type, "text/html");
@@ -154,8 +154,13 @@ static ngx_int_t ngx_http_updown_handler_post(ngx_http_request_t *req) {
   ngx_http_updown_loc_conf_t *conf;
 
   conf= ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
-  ngx_updown_status = 1;
-  ngx_sprintf(ngx_response_body, "up");
+  if (conf->updown == 0) {
+    ngx_sprintf(ngx_response_body, "updown directive is off");
+  } else {
+    ngx_updown_status = 1;
+    ngx_sprintf(ngx_response_body, "up");
+  }
+
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   req->headers_out.status = 200;
   ngx_str_set(&req->headers_out.content_type, "text/html");
@@ -177,8 +182,13 @@ static ngx_int_t ngx_http_updown_handler_delete(ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
   ngx_http_updown_loc_conf_t *conf;
 
-  ngx_updown_status = 0;
   conf= ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
+  if (conf->updown == 0) {
+    ngx_sprintf(ngx_response_body, "updown directive is off");
+  } else {
+    ngx_updown_status = 0;
+    ngx_sprintf(ngx_response_body, "down");
+  }
   ngx_sprintf(ngx_response_body, "down");
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   req->headers_out.status = 200;
