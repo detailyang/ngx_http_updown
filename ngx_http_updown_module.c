@@ -105,7 +105,7 @@ static ngx_int_t ngx_http_updown_init(ngx_conf_t *cf) {
   ngx_http_handler_pt        *h;
   ngx_http_core_main_conf_t  *cmcf;
 
-  cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_updown_module);
+  cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
 
   h = ngx_array_push(&cmcf->phases[NGX_HTTP_CONTENT_PHASE].handlers);
   if (h == NULL) {
@@ -126,6 +126,9 @@ static ngx_int_t ngx_http_updown_handler_get (ngx_http_request_t *req) {
   ngx_http_updown_loc_conf_t *conf;
   ngx_int_t rc;
 
+   ngx_log_error(NGX_LOG_ERR, req->connection->log, 0,
+                  "method %V uri %V\r\n",
+                  &req->method, &req->uri);
   conf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
   if (ngx_updown_status == 0) {
     ngx_sprintf(ngx_response_body, "down");
@@ -136,7 +139,6 @@ static ngx_int_t ngx_http_updown_handler_get (ngx_http_request_t *req) {
   }
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   ngx_str_set(&req->headers_out.content_type, "text/html");
-  ngx_http_send_header(req);
   rc = ngx_http_send_header(req);
   if (rc == NGX_ERROR || rc > NGX_OK || req->header_only) {
     return rc;
