@@ -7,6 +7,8 @@
 #include "ngx_http_updown_module.h"
 
 static char *updown_set(ngx_conf_t *, ngx_command_t *, void *);
+static char *ngx_http_updown_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static void *ngx_http_updown_create_loc_conf(ngx_conf_t *cf);
 static ngx_int_t handler(ngx_http_request_t *);
 
 static ngx_command_t ngx_http_updown_commands[] = {
@@ -48,9 +50,23 @@ static ngx_http_module_t ngx_http_updown_module_ctx = {
     NULL                        /* merge location configuration */
 };
 
-static void *ngx_http_updown_create_loc_conf(ngx_conf_t *cf)
-{
-        ngx_http_hello_loc_conf_t* local_conf = NULL;
+ngx_module_t ngx_http_updown_module = {
+        NGX_MODULE_V1,
+        &ngx_http_updown_module_ctx,   /* module context */
+        ngx_http_updown_commands,      /* module directives */
+        NGX_HTTP_MODULE,               /* module type */
+        NULL,                          /* init master */
+        NULL,                          /* init module */
+        NULL,                          /* init process */
+        NULL,                          /* init thread */
+        NULL,                          /* exit thread */
+        NULL,                          /* exit process */
+        NULL,                          /* exit master */
+        NGX_MODULE_V1_PADDING
+};
+
+static void *ngx_http_updown_create_loc_conf(ngx_conf_t *cf) {
+        ngx_http_updown_loc_conf_t *local_conf = NULL;
         local_conf = ngx_pcalloc(cf->pool, sizeof(ngx_http_updown_loc_conf_t));
         if (local_conf == NULL)
         {
@@ -58,13 +74,13 @@ static void *ngx_http_updown_create_loc_conf(ngx_conf_t *cf)
         }
 
         local_conf->up_code = DEFAULT_UP_CODE;
-        local_conf->down_code = DEFAULT_UP_CODE;
+        local_conf->down_code = DEFAULT_DOWN_CODE;
 
         return local_conf;
 }
 
 static char *ngx_http_updown_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
-        ngx_http_hello_loc_conf_t* local_conf;
+        ngx_http_updown_loc_conf_t *local_conf = NULL;
         local_conf = conf;
         char* rv = NULL;
 
@@ -87,7 +103,7 @@ static ngx_int_t handler_get (ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
   ngx_http_updown_loc_conf_t *conf;
 
-  conf= ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
+  conf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
   if (ngx_updown_status == 0) {
     ngx_sprintf(ngx_response_body, "down");
     req->headers_out.status = conf->down_code;
@@ -113,12 +129,13 @@ static ngx_int_t handler_get (ngx_http_request_t *req) {
 
 static ngx_int_t handler_post(ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
+  ngx_http_updown_loc_conf_t *conf;
 
   conf= ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
   ngx_updown_status = 1;
   ngx_sprintf(ngx_response_body, "up");
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
-  req->headers_out.status = conf->up_code;
+  req->headers_out.status = 200;
   ngx_str_set(&req->headers_out.content_type, "text/html");
   ngx_http_send_header(req);
 
@@ -136,12 +153,13 @@ static ngx_int_t handler_post(ngx_http_request_t *req) {
 
 static ngx_int_t handler_delete(ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
+  ngx_http_updown_loc_conf_t *conf;
 
   ngx_updown_status = 0;
   conf= ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
   ngx_sprintf(ngx_response_body, "down");
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
-  req->headers_out.status = down_code;
+  req->headers_out.status = 200;
   ngx_str_set(&req->headers_out.content_type, "text/html");
   ngx_http_send_header(req);
 
@@ -162,9 +180,9 @@ static ngx_int_t handler(ngx_http_request_t *req) {
     case NGX_HTTP_GET:
       return handler_get(req);
     case NGX_HTTP_POST:
-      return http_post(req);
+      return handler_post(req);
     case NGX_HTTP_DELETE:
-      return http_delete(req);
+      return handler_delete(req);
     default:
       return handler_get(req);
   }
