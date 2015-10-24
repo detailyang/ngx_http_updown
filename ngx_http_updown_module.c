@@ -6,16 +6,17 @@
 */
 #include "ngx_http_updown_module.h"
 
-static char *updown_set(ngx_conf_t *, ngx_command_t *, void *);
 static char *ngx_http_updown_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static char *ngx_http_updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void *ngx_http_updown_create_loc_conf(ngx_conf_t *cf);
-static ngx_int_t handler(ngx_http_request_t *);
+static ngx_int_t ngx_http_updown_init(ngx_conf_t *cf);
+static ngx_int_t ngx_http_updown_handler(ngx_http_request_t *req);
 
 static ngx_command_t ngx_http_updown_commands[] = {
    {
         ngx_string("updown"),
         NGX_HTTP_LOC_CONF | NGX_CONF_FLAG,
-        updown_set,
+        ngx_http_updown_set,
         NGX_HTTP_LOC_CONF_OFFSET,
         offsetof(ngx_http_updown_loc_conf_t, updown),
         NULL },
@@ -73,8 +74,9 @@ static void *ngx_http_updown_create_loc_conf(ngx_conf_t *cf) {
             return NULL;
     }
 
-    local_conf->up_code = DEFAULT_UP_CODE;
-    local_conf->down_code = DEFAULT_DOWN_CODE;
+    local_conf->updown = NGX_CONF_UNSET;
+    local_conf->up_code = NGX_CONF_UNSET;
+    local_conf->down_code = NGX_CONF_UNSET;
 
     return local_conf;
 }
