@@ -44,28 +44,13 @@ static char *set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
   return NGX_CONF_OK;
 };
 
-static ngx_int_t handler(ngx_http_request_t *req) {
-  switch(req->method) {
-    case NGX_HTTP_GET:
-      return get(req);
-    // case NGX_HTTP_POST:
-    //   return post(req);
-    // case NGX_HTTP_DELETE:
-    //   return delete(req);
-    default:
-      return get(req);
-  }
-
-  return get(req);
-}
-
 //0 is down, 1 is up
 static int ngx_updown_status = 0;
 
-static ngx_init_t get(ngx_http_request_t *req) {
+static ngx_int_t handler_get (ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
 
-  ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "receive request");
+  ngx_log_error(NGX_LOG_ERR, req->connection->log, 0, "receive request");
 
   ngx_log_error(NGX_LOG_ERR, req->connection->log, 0,
                           "url:%V method:%V",
@@ -86,18 +71,25 @@ static ngx_init_t get(ngx_http_request_t *req) {
   ngx_chain_t out;
   out.buf = b;
   out.next = NULL;
-  b->pos = html;
-  b->last = html + len;
+  b->pos = ngx_response_body;
+  b->last = ngx_response_body + req->headers_out.content_length_n;
   b->memory = 1;
   b->last_buf = 1;
 
   return ngx_http_output_filter(req, &out);
 }
 
-static ngx_init_t post(ngx_http_request_t *req) {
+static ngx_int_t handler(ngx_http_request_t *req) {
+  switch(req->method) {
+    case NGX_HTTP_GET:
+      return handler_get(req);
+    // case NGX_HTTP_POST:
+    //   return post(req);
+    // case NGX_HTTP_DELETE:
+    //   return delete(req);
+    default:
+      return handler_get(req);
+  }
 
-}
-
-static ngx_init_t delete(ngx_http_request_t *req) {
-
+  return handler_get(req);
 }
