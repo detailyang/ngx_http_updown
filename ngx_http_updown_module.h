@@ -6,7 +6,6 @@
 #include <nginx.h>
 
 typedef struct {
-    ngx_int_t updown;
     ngx_int_t up_code;
     ngx_int_t down_code;
 } ngx_http_updown_loc_conf_t;
