@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-10-24 12:27:09
+* @Last Modified time: 2015-10-24 12:30:37
 */
 
 #include <ngx_config.h>
@@ -103,6 +103,7 @@ static ngx_int_t handler_post(ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
 
   ngx_updown_status = 1;
+  ngx_sprintf(ngx_response_body, "up");
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   req->headers_out.status = 200;
   ngx_str_set(&req->headers_out.content_type, "text/html");
@@ -124,6 +125,7 @@ static ngx_int_t handler_delete(ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
 
   ngx_updown_status = 0;
+  ngx_sprintf(ngx_response_body, "down");
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   req->headers_out.status = 200;
   ngx_str_set(&req->headers_out.content_type, "text/html");
