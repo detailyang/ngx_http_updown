@@ -6,8 +6,9 @@
 #include <nginx.h>
 
 typedef struct {
-    int up_code;
-    int down_code;
+    ngx_int_t updown;
+    ngx_int_t up_code;
+    ngx_int_t down_code;
 } ngx_http_updown_loc_conf_t;
 
 #define DEFAULT_UP_CODE 200
