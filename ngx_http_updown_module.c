@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-10-24 21:05:29
+* @Last Modified time: 2015-10-24 22:08:55
 */
 #include "ngx_http_updown_module.h"
 
@@ -15,10 +15,10 @@ static ngx_int_t ngx_http_updown_handler(ngx_http_request_t *req);
 static ngx_command_t ngx_http_updown_commands[] = {
  {
     ngx_string("updown"),
-    NGX_HTTP_LOC_CONF | NGX_CONF_FLAG,
+    NGX_HTTP_LOC_CONF | NGX_CONF_NOARGS,
     ngx_http_updown_set,
     NGX_HTTP_LOC_CONF_OFFSET,
-    offsetof(ngx_http_updown_loc_conf_t, updown),
+    0,
     NULL },
   {
     ngx_string("up_code"),
@@ -92,13 +92,12 @@ static char *ngx_http_updown_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *
 }
 
 static char *ngx_http_updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
-  ngx_http_updown_loc_conf_t *local_conf = NULL;
-  local_conf = conf;
-  char* rv = NULL;
+    ngx_http_core_loc_conf_t  *clcf;
 
-  rv = ngx_conf_set_flag_slot(cf, cmd, conf);
+    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+    clcf->handler = ngx_http_updown_handler;
 
-  return rv;
+    return NGX_CONF_OK;
 };
 
 static ngx_int_t ngx_http_updown_init(ngx_conf_t *cf) {
