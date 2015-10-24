@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-10-24 15:01:52
+* @Last Modified time: 2015-10-24 15:21:52
 */
 #include "ngx_http_updown_module.h"
 
@@ -84,18 +84,19 @@ static char *ngx_http_updown_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *
   local_conf = conf;
   char* rv = NULL;
 
-  rv = ngx_conf_set_flag_slot(cf, cmd, conf);
+  rv = ngx_conf_set_num_slot(cf, cmd, conf);
 
   return rv;
 }
 
-static char *updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
+static char *ngx_http_updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
   ngx_http_updown_loc_conf_t *local_conf = NULL;
   local_conf = conf;
   char* rv = NULL;
 
-  rv = ngx_conf_set_num_slot(cf, cmd, conf);
-  return NGX_CONF_OK;
+  rv = ngx_conf_set_flag_slot(cf, cmd, conf);
+
+  return rv;
 };
 
 static ngx_int_t ngx_http_updown_init(ngx_conf_t *cf) {
