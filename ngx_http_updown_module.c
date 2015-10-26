@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-10-24 22:08:55
+* @Last Modified time: 2015-10-26 11:19:44
 */
 #include "ngx_http_updown_module.h"
 
@@ -201,8 +201,6 @@ static ngx_int_t ngx_http_updown_handler_delete(ngx_http_request_t *req) {
 
 static ngx_int_t ngx_http_updown_handler(ngx_http_request_t *req) {
   switch(req->method) {
-    case NGX_HTTP_HEAD:
-      return NGX_DECLINED;
     case NGX_HTTP_GET:
       return ngx_http_updown_handler_get(req);
     case NGX_HTTP_POST:
