@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-10-26 11:19:44
+* @Last Modified time: 2015-10-26 15:45:48
 */
 #include "ngx_http_updown_module.h"
 
@@ -10,6 +10,7 @@ static char *ngx_http_updown_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *
 static char *ngx_http_updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void *ngx_http_updown_create_loc_conf(ngx_conf_t *cf);
 static ngx_int_t ngx_http_updown_handler(ngx_http_request_t *req);
+static ngx_int_t ngx_http_updown_module_init(ngx_cycle_t *cycle);
 
 static ngx_command_t ngx_http_updown_commands[] = {
  {
@@ -56,7 +57,7 @@ ngx_module_t ngx_http_updown_module = {
   ngx_http_updown_commands,      /* module directives */
   NGX_HTTP_MODULE,               /* module type */
   NULL,                          /* init master */
-  NULL,                          /* init module */
+  ngx_http_updown_module_init,   /* init module */
   NULL,                          /* init process */
   NULL,                          /* init thread */
   NULL,                          /* exit thread */
@@ -90,16 +91,44 @@ static char *ngx_http_updown_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *
 }
 
 static char *ngx_http_updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
-    ngx_http_core_loc_conf_t  *clcf;
+  ngx_http_core_loc_conf_t  *clcf;
 
-    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
-    clcf->handler = ngx_http_updown_handler;
+  clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+  clcf->handler = ngx_http_updown_handler;
 
-    return NGX_CONF_OK;
+  return NGX_CONF_OK;
 };
 
+
 //0 is down, 1 is up
-static int ngx_updown_status = 1;
+static ngx_atomic_t ngx_updown_status0 = 1;
+ngx_atomic_t         *ngx_updown_status = &ngx_updown_status0;
+
+static ngx_int_t
+ngx_http_updown_module_init(ngx_cycle_t *cycle) {
+  u_char              *shared;
+  size_t               size, cl;
+  ngx_shm_t            shm;
+
+  cl = 128;
+  size = cl; /* updown status*/
+
+  shm.size = size;
+  shm.name.len = sizeof("nginx_shared_zone_updown");
+  shm.name.data = (u_char *) "nginx_shared_zone_updown";
+  shm.log = cycle->log;
+
+  if (ngx_shm_alloc(&shm) != NGX_OK) {
+    return NGX_ERROR;
+  }
+
+  shared = shm.addr;
+
+  ngx_updown_status = (ngx_atomic_t *) (shared);
+  (void) ngx_atomic_cmp_set(ngx_updown_status, 0, 1);
+
+  return NGX_OK;
+}
 
 static ngx_int_t ngx_http_updown_handler_get (ngx_http_request_t *req) {
   u_char ngx_response_body[1024] = {0};
@@ -107,7 +136,8 @@ static ngx_int_t ngx_http_updown_handler_get (ngx_http_request_t *req) {
   ngx_int_t rc;
 
   conf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
-  if (ngx_updown_status == 0) {
+
+  if (*ngx_updown_status == (ngx_atomic_t) 0) {
     ngx_sprintf(ngx_response_body, "down");
     req->headers_out.status = (conf->down_code == NGX_CONF_UNSET ? DEFAULT_DOWN_CODE: conf->down_code);
   } else {
@@ -142,7 +172,7 @@ static ngx_int_t ngx_http_updown_handler_post(ngx_http_request_t *req) {
   ngx_int_t rc;
 
   conf= ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
-  ngx_updown_status = 1;
+  (void) ngx_atomic_cmp_set(ngx_updown_status, 0, 1);
   ngx_sprintf(ngx_response_body, "up");
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   req->headers_out.status = 200;
@@ -174,7 +204,7 @@ static ngx_int_t ngx_http_updown_handler_delete(ngx_http_request_t *req) {
   ngx_int_t rc;
 
   conf= ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
-  ngx_updown_status = 0;
+  (void) ngx_atomic_cmp_set(ngx_updown_status, 1, 0);
   ngx_sprintf(ngx_response_body, "down");
   req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
   req->headers_out.status = 200;
