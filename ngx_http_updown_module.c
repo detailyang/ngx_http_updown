@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-10-26 15:45:48
+* @Last Modified time: 2015-11-02 17:10:15
 */
 #include "ngx_http_updown_module.h"
 
@@ -101,8 +101,7 @@ static char *ngx_http_updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
 //0 is down, 1 is up
-static ngx_atomic_t ngx_updown_status0 = 1;
-ngx_atomic_t         *ngx_updown_status = &ngx_updown_status0;
+static ngx_atomic_t         *ngx_updown_status = NULL;
 
 static ngx_int_t
 ngx_http_updown_module_init(ngx_cycle_t *cycle) {
@@ -238,8 +237,8 @@ static ngx_int_t ngx_http_updown_handler(ngx_http_request_t *req) {
     case NGX_HTTP_DELETE:
       return ngx_http_updown_handler_delete(req);
     default:
-      return ngx_http_updown_handler_get(req);
+      return NGX_HTTP_NOT_ALLOWED;
   }
 
-  return ngx_http_updown_handler_get(req);
+  return NGX_HTTP_NOT_ALLOWED;
 }
