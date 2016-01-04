@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
 * @Last Modified by:   detailyang
-* @Last Modified time: 2015-11-02 17:10:15
+* @Last Modified time: 2016-01-04 20:16:00
 */
 #include "ngx_http_updown_module.h"
 
@@ -99,7 +99,6 @@ static char *ngx_http_updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
   return NGX_CONF_OK;
 };
 
-
 //0 is down, 1 is up
 static ngx_atomic_t         *ngx_updown_status = NULL;
 
@@ -109,22 +108,22 @@ ngx_http_updown_module_init(ngx_cycle_t *cycle) {
   size_t               size, cl;
   ngx_shm_t            shm;
 
-  cl = 128;
-  size = cl; /* updown status*/
+  if (ngx_updown_status == NULL) {
+    cl = 128;
+    size = cl; /* updown status*/
 
-  shm.size = size;
-  shm.name.len = sizeof("nginx_shared_zone_updown");
-  shm.name.data = (u_char *) "nginx_shared_zone_updown";
-  shm.log = cycle->log;
+    shm.size = size;
+    shm.name.len = sizeof("nginx_shared_zone_updown");
+    shm.name.data = (u_char *) "nginx_shared_zone_updown";
+    shm.log = cycle->log;
 
-  if (ngx_shm_alloc(&shm) != NGX_OK) {
-    return NGX_ERROR;
+    if (ngx_shm_alloc(&shm) != NGX_OK) {
+      return NGX_ERROR;
+    }
+    shared = shm.addr;
+    ngx_updown_status = (ngx_atomic_t *) (shared);
+    (void) ngx_atomic_cmp_set(ngx_updown_status, 0, 1);
   }
-
-  shared = shm.addr;
-
-  ngx_updown_status = (ngx_atomic_t *) (shared);
-  (void) ngx_atomic_cmp_set(ngx_updown_status, 0, 1);
 
   return NGX_OK;
 }
