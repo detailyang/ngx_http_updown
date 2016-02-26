@@ -1,8 +1,8 @@
 /*
 * @Author: detailyang
 * @Date:   2015-10-24 10:36:19
-* @Last Modified by:   detailyang
-* @Last Modified time: 2016-01-04 20:16:00
+* @Last modified by:   detailyang
+* @Last modified time: 2016-04-16T00:24:08+08:00
 */
 #include "ngx_http_updown_module.h"
 
@@ -39,14 +39,11 @@ static ngx_command_t ngx_http_updown_commands[] = {
 
 static ngx_http_module_t ngx_http_updown_module_ctx = {
   NULL,                          /* preconfiguration */
-  NULL,          /* postconfiguration */
-
+  NULL,                         /* postconfiguration */
   NULL,                          /* create main configuration */
   NULL,                          /* init main configuration */
-
   NULL,                          /* create server configuration */
   NULL,                          /* merge server configuration */
-
   ngx_http_updown_create_loc_conf, /* create location configuration */
   NULL                        /* merge location configuration */
 };
