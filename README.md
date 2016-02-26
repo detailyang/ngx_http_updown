@@ -1,4 +1,4 @@
-#ngx_http_updown_module is a an addon for Nginx to graceful up or down
+ngx_http_updown_module is a an addon for Nginx to graceful up or down
 
 Syntax: updown on
 Context: location
