@@ -10,13 +10,13 @@ Description: enable updown modules
 Syntax: up_code xxx      
 Default: 200       
 Context: location        
-Description: make uri return http code xxx if server up
+Description: make uri return http code xxx when server up
 
 >
 Syntax: down_code xxx    
 Default: 500       
 Context: location       
-Description: make uri return http code xxx if server down
+Description: make uri return http code xxx when server down
 
 #Example
 ````bash
