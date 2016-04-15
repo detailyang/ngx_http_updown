@@ -1,28 +1,26 @@
 ngx_http_updown_module is a an addon for Nginx to graceful up or down
 
-#Directive
->
-Syntax: updown      
-Context: location        
-Description: enable updown modules
+Table of Contents
+-----------------
 
->
-Syntax: up_code xxx      
-Default: 200       
-Context: location        
-Description: make uri return http code xxx when server up
+  * [Requirements](#requirements)
+  * [Production](#production)
+  * [Contributing](#contributing)
+  * [License](#license)
+  * [Author](#Author)
 
->
-Syntax: down_code xxx    
-Default: 500       
-Context: location       
-Description: make uri return http code xxx when server down
+  Contributing
+  ------------
 
-#Example
-````bash
-    location = /healthcheck {
-      updown;
-      up_code 200;
-      down_code 500;
-    }
-````
+  To contribute to updown, clone this repo locally and commit your code on a separate branch.
+
+
+  Author
+  ------
+
+  > GitHub [@detailyang](https://github.com/detailyang)     
+
+
+  License
+  -------
+  CAS is licensed under the [MIT] license.  
