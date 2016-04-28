@@ -13,8 +13,7 @@ Table of Contents
 
 #How-To-Work
 -------------
-ngx_http_updown let the nginx location become a health check interface, including online and offline nginx.
-
+ngx_http_updown let the nginx location become a health check interface, including online and offline nginx.             
 For example:
 
 ```bash
@@ -91,6 +90,7 @@ location /hc {
 
 Production
 ----------
+
 
 
 Contributing
