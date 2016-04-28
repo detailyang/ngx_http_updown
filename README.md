@@ -2,11 +2,44 @@ ngx_http_updown_module is a an addon for Nginx to graceful up or down
 
 Table of Contents
 -----------------
+* [How-To-Work](#how-to-work)
 * [Requirements](#requirements)
 * [Direction](#direction)
+* [Production](#production)
 * [Contributing](#contributing)
 * [Author](#author)
 * [License](#license)
+
+
+#How-To-Work
+-------------
+ngx_http_updown let the nginx location become a health check interface, including online and offline nginx.
+
+For example:
+
+```bash
+location /hc {
+  updown;
+  updown_code 200;
+  down_code 500;
+}
+
+
+1. when nginx is 'online'
+  GET /hc, return 200
+
+2. now ready to offline nginx
+  DELETE /hc, if success return 200
+
+3. now check the nginx 'status'
+  GET /hc, return 500
+  
+4. now ready to online nginx
+  POST /hc, return 200
+  
+5. now check the nginx 'status'
+  GET /hc, return 200
+```
 
 Requirements
 ------------
@@ -55,6 +88,10 @@ location /hc {
   down_code 500;
 }
 ```
+
+Production
+----------
+
 
 Contributing
 ------------
