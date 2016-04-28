@@ -35,7 +35,7 @@ location /hc {
   GET /hc, return 500
   
 4. now ready to online nginx
-  POST /hc, return 200
+  POST /hc, if success return 200
   
 5. now check the nginx 'status'
   GET /hc, return 200
