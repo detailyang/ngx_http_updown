@@ -2,11 +2,11 @@ ngx_http_updown_module is a an addon for Nginx to graceful up or down
 
 Table of Contents
 -----------------
-* [Requirements](#Requirements)
-* [Direction](#Direction)
-* [Contributing](#Contributing)
-* [Author](#Author)
-* [License](#License)
+* [Requirements](#requirements)
+* [Direction](#direction)
+* [Contributing](#contributing)
+* [Author](#author)
+* [License](#license)
 
 Requirements
 ------------
