@@ -8,6 +8,8 @@
 typedef struct {
     ngx_int_t up_code;
     ngx_int_t down_code;
+    ngx_str_t updown_file;
+    ngx_fd_t updown_file_fd;
 } ngx_http_updown_loc_conf_t;
 
 #define DEFAULT_UP_CODE 200
