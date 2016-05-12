@@ -501,7 +501,7 @@ static ngx_int_t
 ngx_http_updown_sync_to_file(ngx_http_request_t *req,
                              ngx_http_updown_loc_conf_t *ulcf) {
     if (ulcf->updown_file.len == 0 || ulcf->updown_file.len == NGX_CONF_UNSET_SIZE) {
-        ngx_log_error(NGX_LOG_ALERT, req->connection->log, 0,
+        ngx_log_error(NGX_LOG_INFO, req->connection->log, 0,
             "updown: unset updown_file, so skip");
         return NGX_OK;
     }
