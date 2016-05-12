@@ -1,8 +1,6 @@
-<<<<<<< HEAD
 autoconf.err
 autotest
 objs
-=======
 # Object files
 *.o
 *.ko
@@ -35,4 +33,4 @@ objs
 
 # Debug files
 *.dSYM/
->>>>>>> 6aad997ce033a48679f8992ad28de4e53b4ca342
+t/servroot
