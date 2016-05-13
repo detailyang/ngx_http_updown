@@ -1,6 +1,6 @@
 BEGIN {
     $ENV{TEST_NGINX_USE_HUP} = 1;
-    $ENV{TEST_NGINX_NO_CLEAN} = 1;
+    $ENV{TEST_NGINX_NO_CLEAN} = 0;
 }
 
 use Test::Nginx::Socket 'no_plan';
