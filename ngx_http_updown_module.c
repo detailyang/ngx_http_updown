@@ -284,7 +284,8 @@ ngx_http_updown_status_find(uint32_t hash) {
 
     for (i = 0; i < (ngx_int_t)*ngx_updown_status; i ++) {
         if (*(ngx_updown_status + CACHE_LINE * (i * 2 + 2)) == hash) {
-            return *(ngx_updown_status + CACHE_LINE * (i * 2 + 2));
+            // get status for hash
+            return *(ngx_updown_status + CACHE_LINE * (i * 2 + 1));
         }
     }
 
@@ -321,12 +322,33 @@ ngx_http_updown_module_init(ngx_cycle_t *cycle) {
             updown_status = ngx_http_updown_status_find(
                 ngx_murmur_hash2(value[i].name.data, value[i].name.len)
             );
-            updown_status = -1;
             if (updown_status == -1) {
-                ngx_atomic_assign(
-                    new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
-                    value[i].updown_default
-                );
+                if (value[i].updown_file.len == 0 || value[i].updown_file.len == NGX_CONF_UNSET_SIZE) {
+                    ngx_atomic_assign(
+                        new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
+                        value[i].updown_default
+                    );
+                } else {
+                    updown_status = ngx_http_updown_sync_from_file(&value[i], cycle->log);
+                    if (updown_status == -1) {
+                        if (ngx_http_updown_write_file(&(value[i].updown_file), cycle->log,
+                            value[i].updown_default) == NGX_FILE_ERROR) {
+
+                            ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
+                                "updown: sync file error %V", &value[i].updown_file);
+                            return NGX_ERROR;
+                        }
+                        ngx_atomic_assign(
+                            new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
+                            value[i].updown_default
+                        );
+                    } else {
+                        ngx_atomic_assign(
+                            new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
+                            updown_status
+                        );
+                    }
+                }
             } else {
                 ngx_atomic_assign(
                     new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
