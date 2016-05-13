@@ -7,13 +7,13 @@ __DATA__
 === TEST 1: multi location should be up
 --- config
 location = /1 {
-    updown;
+    updown 1;
 }
 location = /2 {
-    updown;
+    updown 2;
 }
 location = /3 {
-    updown;
+    updown 3;
 }
 --- pipelined_requests eval
 ["GET /1", "GET /2", "GET /3"]
@@ -26,13 +26,13 @@ location = /3 {
 === TEST 2: multi location should be isolated
 --- config
 location = /1 {
-    updown;
+    updown 1;
 }
 location = /2 {
-    updown;
+    updown 2;
 }
 location = /3 {
-    updown;
+    updown 3;
 }
 
 --- request eval
@@ -74,7 +74,7 @@ location = /3 {
 --- config eval
 "
 location = /1 {
-    updown;
+    updown 1;
     updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
 }
 location = /1.updown {
@@ -82,7 +82,7 @@ location = /1.updown {
     index 1.updown;
 }
 location = /2 {
-    updown;
+    updown 2;
     updown_file '$ENV{WORKDIR}/t/servroot/html/2.updown';
 }
 location = /2.updown {
@@ -90,7 +90,7 @@ location = /2.updown {
     index 2.updown;
 }
 location = /3 {
-    updown;
+    updown 3;
     updown_file '$ENV{WORKDIR}/t/servroot/html/3.updown';
 }
 location = /3.updown {

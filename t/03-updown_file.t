@@ -8,7 +8,7 @@ __DATA__
 --- config eval
 "
 location = /1 {
-    updown;
+    updown 1;
     updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
 }
 location = /1.updown {
@@ -33,7 +33,7 @@ location = /1.updown {
 --- config eval
 "
 location = /1 {
-    updown;
+    updown 1;
     updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
 }
 "
@@ -50,7 +50,7 @@ GET /1
 --- config eval
 "
 location = /1 {
-    updown;
+    updown 1;
     updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
 }
 "
@@ -67,7 +67,7 @@ GET /1
 --- config eval
 "
 location = /1 {
-    updown;
+    updown 1;
     updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
 }
 "
@@ -81,7 +81,7 @@ GET /1
 --- config eval
 "
 location = /1 {
-    updown;
+    updown 1;
     updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
 }
 location = /1.updown {
@@ -99,7 +99,7 @@ GET /1.updown
 --- config eval
 "
 location = /1 {
-    updown;
+    updown 1;
     updown_default down;
     updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
 }
@@ -121,7 +121,7 @@ GET /1.updown
 --- config eval
 "
 location = /1 {
-    updown;
+    updown 1;
     updown_default down;
     updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
 }

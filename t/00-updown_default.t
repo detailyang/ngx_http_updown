@@ -7,7 +7,7 @@ __DATA__
 === TEST 1: updown_default should be down
 --- config
 location = /1 {
-	updown;
+	updown 1;
     updown_default down;
 }
 --- request
@@ -20,7 +20,7 @@ GET /1
 === TEST 2: updown_default should be up
 --- config
 location = /1 {
-    updown;
+    updown 1;
     updown_default up;
 }
 --- request
