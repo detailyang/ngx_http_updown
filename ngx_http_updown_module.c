@@ -260,10 +260,25 @@ ngx_http_updown_file_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_str_t                         *value;
     ngx_http_updown_loc_conf_t        *ulcf = conf;
+    ngx_fd_t                           fd;
 
     value = cf->args->elts;
     ulcf->updown_file.data = value[1].data;
     ulcf->updown_file.len = value[1].len;
+    fd = ngx_open_file(value[1].data, NGX_FILE_RDWR, NGX_FILE_CREATE_OR_OPEN, 0);
+    if (fd == NGX_INVALID_FILE) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, ngx_errno,
+                          ngx_open_file_n " \"%s\" failed", value[1].data);
+        return NGX_CONF_ERROR;
+    }
+    ngx_close_file(fd);
+    if (ngx_change_file_access(ulcf->updown_file.data,
+        S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IWOTH) == -1 ) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, ngx_errno,
+          ngx_change_file_access_n " \"%s\" failed", value[1].data);
+
+        return NGX_CONF_ERROR;
+    }
 
     ulcf = ngx_http_updown_find_loc_conf(conf);
     if (ulcf == NULL) {
@@ -586,7 +601,7 @@ ngx_http_updown_sync_from_file(ngx_http_updown_loc_conf_t *ulcf, ngx_log_t *log)
 
     // file is empty
     if (n == 0) {
-        return -1;
+        return NGX_FILE_ERROR;
     }
 
     return ngx_atoi(recv, 1);
