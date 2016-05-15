@@ -21,8 +21,8 @@ static ngx_int_t ngx_http_updown_sync_to_file(ngx_http_request_t *req,
 static ngx_int_t ngx_http_updown_sync_from_file(ngx_http_updown_loc_conf_t *ulcf,
                                               ngx_log_t *log);
 static void ngx_http_updown_exit_process(ngx_cycle_t *cycle);
-static ngx_int_t ngx_http_updown_status_find(uint32_t hash);
 static ngx_int_t ngx_http_updown_write_file(ngx_str_t *file, ngx_log_t *log, ngx_int_t status);
+static void ngx_http_updown_status_copy();
 
 static ngx_command_t ngx_http_updown_commands[] = {
   {
@@ -90,7 +90,7 @@ ngx_module_t ngx_http_updown_module = {
 };
 
 //0 is down, 1 is up
-static ngx_atomic_t *ngx_updown_status = NULL;
+static u_char *ngx_updown_status = NULL;
 static ngx_array_t *ulcfs = NULL;
 
 
@@ -293,18 +293,23 @@ ngx_http_updown_file_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-static ngx_int_t
-ngx_http_updown_status_find(uint32_t hash) {
-    ngx_int_t i = 0 ;
+static void
+ngx_http_updown_status_copy(ngx_log_t *log) {
+    ngx_int_t i;
+    ngx_uint_t j;
+    ngx_http_updown_loc_conf_t      *value;
 
-    for (i = 0; i < (ngx_int_t)*ngx_updown_status; i ++) {
-        if (*(ngx_updown_status + CACHE_LINE * (i * 2 + 2)) == hash) {
-            // get status for hash
-            return *(ngx_updown_status + CACHE_LINE * (i * 2 + 1));
+    value = ulcfs->elts;
+    for (i = 0; i < *(ngx_atomic_int_t *)ngx_updown_status; i ++) {
+        for (j = 0; j < ulcfs->nelts; j++) {
+            if (*(uint32_t *)(ngx_updown_status + CACHE_LINE * (i * 2 + 2)) ==
+                ngx_murmur_hash2(value[j].name.data, value[j].name.len)) {
+                value[j].last_status = *(ngx_atomic_int_t *)(ngx_updown_status + CACHE_LINE * (i * 2 + 1));
+            } else {
+                value[j].last_status = -1;
+            }
         }
     }
-
-    return -1;
 }
 
 static ngx_int_t
@@ -313,34 +318,35 @@ ngx_http_updown_module_init(ngx_cycle_t *cycle) {
     ngx_int_t                       updown_status;
     ngx_shm_t                       newshm, oldshm;
     ngx_http_updown_loc_conf_t      *value;
-    ngx_atomic_t                    *new_ngx_updown_status;
 
     if (ngx_updown_status != NULL) {
-        oldshm.size = *ngx_updown_status;
-        oldshm.name.len = sizeof("nginx_shared_zone_updown");
+        ngx_http_updown_status_copy(cycle->log);
+        oldshm.size = (*(ngx_atomic_t *)ngx_updown_status * 2 + 1) * CACHE_LINE;
+        oldshm.name.len = sizeof("nginx_shared_zone_updown") - 1;
         oldshm.name.data = (u_char *) "nginx_shared_zone_updown";
         oldshm.log = cycle->log;
-        oldshm.addr = (u_char *)ngx_updown_status;
+        oldshm.exists = 1;
+        oldshm.addr = ngx_updown_status;
+        ngx_shm_free(&oldshm);
 
-        newshm.size = CACHE_LINE * (ulcfs->nelts * 2 + 1);
-        newshm.name.len = sizeof("nginx_shared_zone_updown");
+        newshm.size = CACHE_LINE * (ulcfs->nelts * 2 + 1) + oldshm.size;
+        newshm.name.len = sizeof("nginx_shared_zone_updown") - 1;
         newshm.name.data = (u_char *) "nginx_shared_zone_updown";
         newshm.log = cycle->log;
         if (ngx_shm_alloc(&newshm) != NGX_OK) {
             return NGX_ERROR;
         }
 
-        new_ngx_updown_status = (ngx_atomic_t *) (newshm.addr);
-        ngx_atomic_assign(new_ngx_updown_status, ulcfs->nelts);
+        ngx_updown_status = newshm.addr;
+        ngx_atomic_int_assign(ngx_updown_status, ulcfs->nelts);
         value = ulcfs->elts;
         for (i = 0; i < ulcfs->nelts; i ++) {
-            updown_status = ngx_http_updown_status_find(
-                ngx_murmur_hash2(value[i].name.data, value[i].name.len)
-            );
+            updown_status = value[i].last_status;
+            ngx_log_error(NGX_LOG_ERR, cycle->log, 0, "last status:%d index:%d", updown_status, i);
             if (updown_status == -1) {
                 if (value[i].updown_file.len == 0 || value[i].updown_file.len == NGX_CONF_UNSET_SIZE) {
-                    ngx_atomic_assign(
-                        new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
+                    ngx_atomic_int_assign(
+                        ngx_updown_status + CACHE_LINE * (i * 2 + 1),
                         value[i].updown_default
                     );
                 } else {
@@ -353,47 +359,46 @@ ngx_http_updown_module_init(ngx_cycle_t *cycle) {
                                 "updown: sync file error %V", &value[i].updown_file);
                             return NGX_ERROR;
                         }
-                        ngx_atomic_assign(
-                            new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
+                        ngx_atomic_int_assign(
+                            ngx_updown_status + CACHE_LINE * (i * 2 + 1),
                             value[i].updown_default
                         );
                     } else {
-                        ngx_atomic_assign(
-                            new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
+                        ngx_atomic_int_assign(
+                            ngx_updown_status + CACHE_LINE * (i * 2 + 1),
                             updown_status
                         );
                     }
                 }
             } else {
-                ngx_atomic_assign(
-                    new_ngx_updown_status + CACHE_LINE * (i * 2 + 1),
+                ngx_atomic_int_assign(
+                    ngx_updown_status + CACHE_LINE * (i * 2 + 1),
                     updown_status
                 );
             }
-            ngx_atomic_assign(
-                new_ngx_updown_status + CACHE_LINE * (i * 2 + 2),
+            ngx_atomic_int_assign(
+                ngx_updown_status + CACHE_LINE * (i * 2 + 2),
                 ngx_murmur_hash2(value[i].name.data, value[i].name.len)
             );
         }
-        ngx_shm_free(&oldshm);
-        ngx_updown_status = new_ngx_updown_status;
     } else {
         newshm.size = CACHE_LINE * (ulcfs->nelts * 2 + 1);
-        newshm.name.len = sizeof("nginx_shared_zone_updown");
+        newshm.name.len = sizeof("nginx_shared_zone_updown") - 1;
         newshm.name.data = (u_char *) "nginx_shared_zone_updown";
+        newshm.exists = 0;
         newshm.log = cycle->log;
         if (ngx_shm_alloc(&newshm) != NGX_OK) {
           return NGX_ERROR;
         }
 
-        ngx_updown_status = (ngx_atomic_t *) (newshm.addr);
+        ngx_updown_status = newshm.addr;
         value = ulcfs->elts;
 
         // record size
-        ngx_atomic_assign(ngx_updown_status, ulcfs->nelts);
+        ngx_atomic_int_assign(ngx_updown_status, ulcfs->nelts);
         for (i = 0; i < ulcfs->nelts; i++ ) {
             if (value[i].updown_file.len == 0 || value[i].updown_file.len == NGX_CONF_UNSET_SIZE) {
-                ngx_atomic_assign(
+                ngx_atomic_int_assign(
                     ngx_updown_status + CACHE_LINE * (i * 2 + 1),
                     value[i].updown_default
                 );
@@ -407,19 +412,19 @@ ngx_http_updown_module_init(ngx_cycle_t *cycle) {
                             "updown: sync file error %V", &value[i].updown_file);
                         return NGX_ERROR;
                     }
-                    ngx_atomic_assign(
+                    ngx_atomic_int_assign(
                         ngx_updown_status + CACHE_LINE * (i * 2 + 1),
                         value[i].updown_default
                     );
                 } else {
-                    ngx_atomic_assign(
+                    ngx_atomic_int_assign(
                         ngx_updown_status + CACHE_LINE * (i * 2 + 1),
                         updown_status
                     );
                 }
             }
-            ngx_atomic_assign(
-                ngx_updown_status + CACHE_LINE * (i * 2 + 2),
+            ngx_atomic_int_assign(
+                (ngx_atomic_int_t *)(ngx_updown_status + CACHE_LINE * (i * 2 + 2)),
                 ngx_murmur_hash2(value[i].name.data, value[i].name.len)
             );
         }
@@ -442,9 +447,7 @@ ngx_http_updown_handler_get (ngx_http_request_t *req) {
     ngx_int_t rc;
 
     ulcf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
-    ngx_log_error(NGX_LOG_ERR, req->connection->log, 0, " req index: %d", ulcf->index);
-
-    if (*(ngx_updown_status + (2 * ulcf->index + 1) * CACHE_LINE) == (ngx_atomic_t) 0) {
+    if (*(ngx_atomic_int_t *)(ngx_updown_status + CACHE_LINE * (2 * ulcf->index + 1)) == 0) {
         ngx_sprintf(ngx_response_body, "down");
         req->headers_out.status = (ulcf->down_code == NGX_CONF_UNSET ? DEFAULT_DOWN_CODE: ulcf->down_code);
     } else {
@@ -480,7 +483,7 @@ ngx_http_updown_handler_post(ngx_http_request_t *req) {
     ngx_int_t rc;
 
     ulcf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
-    ngx_atomic_assign(ngx_updown_status + (2 * ulcf->index + 1) * CACHE_LINE, 1);
+    ngx_atomic_int_assign(ngx_updown_status + (2 * ulcf->index + 1) * CACHE_LINE, 1);
     if (ngx_http_updown_sync_to_file(req, ulcf) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -516,7 +519,7 @@ ngx_http_updown_handler_delete(ngx_http_request_t *req) {
     ngx_int_t rc;
 
     ulcf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
-    ngx_atomic_assign(ngx_updown_status + (2 * ulcf->index + 1) * CACHE_LINE, 0);
+    ngx_atomic_int_assign(ngx_updown_status + CACHE_LINE * (2 * ulcf->index + 1), 0);
     if (ngx_http_updown_sync_to_file(req, ulcf) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -564,7 +567,8 @@ static ngx_int_t
 ngx_http_updown_write_file(ngx_str_t *file, ngx_log_t *log, ngx_int_t status) {
     ngx_fd_t fd;
 
-    fd = ngx_open_file(file->data, NGX_FILE_RDWR, NGX_FILE_CREATE_OR_OPEN, 0);
+    fd = ngx_open_file(file->data, NGX_FILE_RDWR,
+        NGX_FILE_CREATE_OR_OPEN, 0);
     if (fd == NGX_INVALID_FILE) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
             ngx_open_file_n " \"%s\" failed", file->data);
@@ -624,8 +628,13 @@ ngx_http_updown_sync_to_file(ngx_http_request_t *req,
             ngx_open_file_n " \"%s\" failed", ulcf->updown_file.data);
         return NGX_FILE_ERROR;
     }
+    if (ftruncate(fd, 0) == -1) {
+        ngx_log_error(NGX_LOG_EMERG, req->connection->log, ngx_errno,
+             "ftruncate failed %s ", ulcf->updown_file.data);
+        return NGX_FILE_ERROR;
+    }
 
-    if (*(ngx_updown_status + (2 * ulcf->index + 1) * CACHE_LINE) == (ngx_atomic_t) 0) {
+    if (*(ngx_atomic_int_t *)(ngx_updown_status + (2 * ulcf->index + 1) * CACHE_LINE) == 0) {
         ngx_log_error(NGX_LOG_ERR, req->connection->log, 0,
           "updown: sync file %V to 0", &ulcf->updown_file);
         if (ngx_write_fd(fd, "0", 1) == NGX_ERROR) {

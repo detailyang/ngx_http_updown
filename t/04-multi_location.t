@@ -124,6 +124,7 @@ location = /3.updown {
  "down", "up", "down",
  "0", "1", "0"
 ]
+
 --- error_code eval
 [200, 200, 200,
  200,
@@ -136,3 +137,49 @@ location = /3.updown {
  500, 200, 500,
  200, 200, 200,
 ]
+
+=== TEST 4: multi location updown file when file exists should be isolated
+--- user_files eval
+[
+    [ "1.updown" => "0"],
+    [ "2.updown" => "0"],
+    [ "3.updown" => "0"],
+]
+
+--- config eval
+"
+location = /1 {
+    updown 1;
+    updown_file '$ENV{WORKDIR}/t/servroot/html/1.updown';
+}
+location = /1.updown {
+    root html;
+    index 1.updown;
+}
+location = /2 {
+    updown 2;
+    updown_file '$ENV{WORKDIR}/t/servroot/html/2.updown';
+}
+location = /2.updown {
+    root html;
+    index 2.updown;
+}
+location = /3 {
+    updown 3;
+    updown_file '$ENV{WORKDIR}/t/servroot/html/3.updown';
+}
+location = /3.updown {
+    root html;
+    index 3.updown;
+}
+"
+
+--- request eval
+["GET /1", "GET /2", "GET /3"]
+
+--- response_body eval
+["down", "down", "down"]
+
+--- error_code eval
+[500, 500, 500]
+
