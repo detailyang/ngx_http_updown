@@ -5,7 +5,7 @@ before_install:
   - wget http://nginx.org/download/nginx-1.9.15.tar.gz
   - tar -zxf nginx-1.9.15.tar.gz
 script:
-  - (cd nginx-1.9.15 && ./configure --add-module=/home/travis/build/detailyang/ngx_http_updown && make -j4 && make install)
-  - cpanm Test::Nginx
+  - (cd nginx-1.9.15 && ./configure --add-module=/home/travis/build/detailyang/ngx_http_updown && make -j4 && sudo make install)
+  - sudo cpanm Test::Nginx
   - make test
   - pwd
