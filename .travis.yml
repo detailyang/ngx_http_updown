@@ -4,6 +4,6 @@ before_install:
   - sudo wget http://nginx.org/download/nginx-1.9.15.tar.gz
   - tar -zxf nginx-1.9.15.tar.gz
 script:
-  - cd ~/nginx-1.9.15 && ./configure --add-module=/home/travis/build/ngx_http_updown_module/ && make -j4 && make install
+  - cd /home/travis/build/nginx-1.9.15 && ./configure --add-module=/home/travis/build/ngx_http_updown_module/ && make -j4 && make install
   - make test
   - pwd
