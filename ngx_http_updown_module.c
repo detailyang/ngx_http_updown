@@ -435,9 +435,7 @@ ngx_http_updown_module_init(ngx_cycle_t *cycle) {
 
 static void
 ngx_http_updown_exit_process(ngx_cycle_t *cycle) {
-    ngx_http_updown_loc_conf_t      *value;
-
-    value = ulcfs->elts;
+    // TODO
 }
 
 static ngx_int_t
