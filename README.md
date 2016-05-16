@@ -1,5 +1,7 @@
-ngx_http_updown_module is a an addon for Nginx to graceful up or down
+# nginx http updown module
+![Branch master](https://img.shields.io/badge/branch-master-brightgreen.svg?style=flat-square)[![Build](https://api.travis-ci.org/detailyang/ngx_http_updown.svg)](https://travis-ci.org/detailyang/ngx_http_updown)[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/detailyang/ngx_http_updown/master/LICENSE)[![release](https://img.shields.io/github/release/detailyang/ngx_http_updown.svg)](https://github.com/detailyang/ngx_http_updown/releases)
 
+ngx_http_updown_module is a an addon for Nginx to graceful up or down    
 Table of Contents
 -----------------
 * [How-To-Work](#how-to-work)
