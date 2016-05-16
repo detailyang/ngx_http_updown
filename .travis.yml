@@ -4,10 +4,10 @@ before_install:
   - sudo apt-get install libev-dev build-essential cpanminus
   - wget https://github.com/lighttpd/weighttp/archive/weighttp-0.4.tar.gz
   - tar -zxf weighttp-0.4.tar.gz
-  - cd weighttp-weighttp-0.4 && ./autogen.sh && ./configure && make && sudo make install
+  - (cd weighttp-weighttp-0.4 && ./autogen.sh && ./configure && make && sudo make install)
   - wget http://nginx.org/download/nginx-1.9.15.tar.gz
   - tar -zxf nginx-1.9.15.tar.gz
 script:
   - (cd nginx-1.9.15 && ./configure --add-module=/home/travis/build/detailyang/ngx_http_updown && make -j4 && sudo make install)
   - sudo cpanm Test::Nginx
-  - pwd && make test
+  - make test
