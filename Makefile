@@ -1,4 +1,4 @@
-PATH := /usr/local/nginx/sbin:$(PATH)
+PATH := /usr/local/bin:/usr/local/nginx/sbin:$(PATH)
 test:
 	@WORKDIR=$(shell pwd) /usr/bin/prove
 
