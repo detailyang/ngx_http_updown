@@ -565,8 +565,7 @@ static ngx_int_t
 ngx_http_updown_write_file(ngx_str_t *file, ngx_log_t *log, ngx_int_t status) {
     ngx_fd_t fd;
 
-    fd = ngx_open_file(file->data, NGX_FILE_RDWR,
-        NGX_FILE_CREATE_OR_OPEN, 0);
+    fd = ngx_open_file(file->data, NGX_FILE_RDWR, NGX_FILE_CREATE_OR_OPEN, 0);
     if (fd == NGX_INVALID_FILE) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
             ngx_open_file_n " \"%s\" failed", file->data);
@@ -575,9 +574,11 @@ ngx_http_updown_write_file(ngx_str_t *file, ngx_log_t *log, ngx_int_t status) {
     if (ngx_write_fd(fd, status ? "1" : "0", 1) == NGX_ERROR) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
             ngx_write_fd_n" \"%s\" failed", file->data);
+        ngx_close_file(fd);
         return NGX_FILE_ERROR;
     }
 
+    ngx_close_file(fd);
     return NGX_OK;
 }
 
