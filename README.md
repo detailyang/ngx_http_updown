@@ -103,6 +103,8 @@ location /hc {
   updown default;
   updown_file /data/updown/default.updown
 }
+
+PS: we use open->lseek->write sysmtem call to write data to file in multiprocess, But updown interface not be high concurrence context if you using it correctly, so need not to add lock when write file:) 
 ```
 
 Production
