@@ -1,7 +1,7 @@
 # nginx http updown module
 ![Branch master](https://img.shields.io/badge/branch-master-brightgreen.svg?style=flat-square)[![Build](https://api.travis-ci.org/detailyang/ngx_http_updown.svg)](https://travis-ci.org/detailyang/ngx_http_updown)[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/detailyang/ngx_http_updown/master/LICENSE)[![release](https://img.shields.io/github/release/detailyang/ngx_http_updown.svg)](https://github.com/detailyang/ngx_http_updown/releases)
 
-ngx_http_updown_module is a an addon for Nginx to graceful up or down    
+ngx_http_updown_module is a an addon for Nginx to graceful up or down
 Table of Contents
 -----------------
 * [How-To-Work](#how-to-work)
@@ -21,7 +21,7 @@ For example:
 
 ```bash
 location /hc {
-  updown;
+  updown "default";
   updown_code 200;
   down_code 500;
 }
@@ -57,12 +57,12 @@ Direction
 * updown
 
 ```
-Syntax:	updown;
+Syntax:	updown string;
 Default:	—
 Context:	location
 
 location /hc {
-  updown;
+  updown default;
 }
 ```
 
@@ -82,13 +82,25 @@ location /hc {
 * down_code
 
 ```
-Syntax:	 down_code number;
+Syntax:     down_code number;
 Default:	500
 Context:	location
 
 location /hc {
   updown;
   down_code 500;
+}
+
+* updown_file
+
+```
+Syntax:     updown_file filename;
+Default:    -
+Context:    location
+
+location /hc {
+  updown default;
+  updown_file /data/updown/default.updown
 }
 ```
 
@@ -150,8 +162,15 @@ server {
     }
 
     location = /hc {
-        updown;
+        updown default;
         down_code 404;
+        updown_file /data/updown/default.updown;
+    }
+
+    location = /anotherhc {
+        updown another;
+        down_code 404;
+        updown_file /data/updown/another.updown;
     }
 }
 ```

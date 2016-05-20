@@ -2,3 +2,4 @@
 
 Features:
   - add new directive updown_file to persistenct updown status to file
+  - support multi location with updown module
