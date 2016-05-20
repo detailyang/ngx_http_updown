@@ -565,9 +565,7 @@ static ngx_int_t
 ngx_http_updown_write_file(ngx_str_t *file, ngx_log_t *log, ngx_int_t status) {
     ngx_fd_t fd;
 
-    // #define NGX_FILE_APPEND          (O_WRONLY|O_APPEND)
-    // APPEND flag means write is atomic
-    fd = ngx_open_file(file->data, NGX_FILE_APPEND, NGX_FILE_CREATE_OR_OPEN, 0);
+    fd = ngx_open_file(file->data, NGX_FILE_RDWR, NGX_FILE_CREATE_OR_OPEN, 0);
     if (fd == NGX_INVALID_FILE) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
             ngx_open_file_n " \"%s\" failed", file->data);
@@ -584,7 +582,6 @@ ngx_http_updown_write_file(ngx_str_t *file, ngx_log_t *log, ngx_int_t status) {
     return NGX_OK;
 }
 
-// THIS WILL BE OPENED IN 'ONE' MASTER PROCESS
 static ngx_int_t
 ngx_http_updown_sync_from_file(ngx_http_updown_loc_conf_t *ulcf, ngx_log_t *log) {
     u_char      recv[1] = {0};
@@ -595,11 +592,6 @@ ngx_http_updown_sync_from_file(ngx_http_updown_loc_conf_t *ulcf, ngx_log_t *log)
     if (fd == NGX_INVALID_FILE) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
             ngx_open_file_n " \"%s\" failed", ulcf->updown_file.data);
-        return NGX_FILE_ERROR;
-    }
-    if (lseek(fd, 0, SEEK_END) == -1) {
-        ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
-            "lseek %s failed", ulcf->updown_file.data);
         return NGX_FILE_ERROR;
     }
     n = ngx_read_fd(fd, recv, 1);
@@ -629,10 +621,15 @@ ngx_http_updown_sync_to_file(ngx_http_request_t *req,
         return NGX_OK;
     }
 
-    fd = ngx_open_file(ulcf->updown_file.data, NGX_FILE_APPEND, NGX_FILE_CREATE_OR_OPEN, 0);
+    fd = ngx_open_file(ulcf->updown_file.data, NGX_FILE_RDWR, NGX_FILE_CREATE_OR_OPEN, 0);
     if (fd == NGX_INVALID_FILE) {
         ngx_log_error(NGX_LOG_EMERG, req->connection->log, ngx_errno,
             ngx_open_file_n " \"%s\" failed", ulcf->updown_file.data);
+        return NGX_FILE_ERROR;
+    }
+    if (ftruncate(fd, 0) == -1) {
+        ngx_log_error(NGX_LOG_EMERG, req->connection->log, ngx_errno,
+             "ftruncate failed %s ", ulcf->updown_file.data);
         return NGX_FILE_ERROR;
     }
 
