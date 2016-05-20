@@ -11,3 +11,11 @@ script:
   - (cd nginx-1.9.15 && ./configure --add-module=/home/travis/build/detailyang/ngx_http_updown && make -j4 && sudo make install)
   - sudo cpanm Test::Nginx
   - make test
+
+deploy:
+  provider: releases
+  api_key: $CI_USER_TOKEN
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
