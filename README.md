@@ -21,7 +21,7 @@ For example:
 
 ```bash
 location /hc {
-  updown "default";
+  updown default;
   updown_code 200;
   down_code 500;
 }
@@ -90,6 +90,7 @@ location /hc {
   updown;
   down_code 500;
 }
+```
 
 * updown_file
 
