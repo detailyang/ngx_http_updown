@@ -90,8 +90,10 @@ ngx_module_t ngx_http_updown_module = {
 };
 
 //0 is down, 1 is up
-static u_char *ngx_updown_status = NULL;
-static ngx_array_t *ulcfs = NULL;
+static u_char           *ngx_updown_status = NULL;
+static ngx_array_t      *ulcfs = NULL;
+static ngx_atomic_t     *ngx_updown_status_sync_mutex_ptr = NULL;
+static ngx_shmtx_t       ngx_updown_status_sync_mutex;
 
 
 static ngx_int_t
@@ -316,8 +318,24 @@ static ngx_int_t
 ngx_http_updown_module_init(ngx_cycle_t *cycle) {
     ngx_uint_t                       i;
     ngx_int_t                       updown_status;
-    ngx_shm_t                       newshm, oldshm;
+    ngx_shm_t                       newshm, oldshm, mutexshm;
     ngx_http_updown_loc_conf_t      *value;
+
+    if (ngx_updown_status_sync_mutex_ptr == NULL) {
+        mutexshm.size = CACHE_LINE;
+        mutexshm.name.len = sizeof("nginx_shared_zone_updown_file") - 1;
+        mutexshm.name.data = (u_char *) "nginx_shared_zone_updown_file";
+        mutexshm.log = cycle->log;
+        if (ngx_shm_alloc(&mutexshm) != NGX_OK) {
+            return NGX_ERROR;
+        }
+        ngx_updown_status_sync_mutex_ptr = (ngx_atomic_t *)mutexshm.addr;
+        ngx_updown_status_sync_mutex.spin = -1;
+        if (ngx_shmtx_create(&ngx_updown_status_sync_mutex, (ngx_shmtx_sh_t *) mutexshm.addr,
+           cycle->lock_file.data) != NGX_OK) {
+            return NGX_ERROR;
+        }
+    }
 
     if (ngx_updown_status != NULL) {
         ngx_http_updown_status_copy(cycle->log);
@@ -625,12 +643,14 @@ ngx_http_updown_sync_to_file(ngx_http_request_t *req,
     if (fd == NGX_INVALID_FILE) {
         ngx_log_error(NGX_LOG_EMERG, req->connection->log, ngx_errno,
             ngx_open_file_n " \"%s\" failed", ulcf->updown_file.data);
-        return NGX_FILE_ERROR;
+        return NGX_ERROR;
     }
+    // get lock to let (ftruncate + write) atomic
+    ngx_shmtx_lock(&ngx_updown_status_sync_mutex);
     if (ftruncate(fd, 0) == -1) {
         ngx_log_error(NGX_LOG_EMERG, req->connection->log, ngx_errno,
              "ftruncate failed %s ", ulcf->updown_file.data);
-        return NGX_FILE_ERROR;
+        goto fail;
     }
 
     if (*(ngx_atomic_int_t *)(ngx_updown_status + (2 * ulcf->index + 1) * CACHE_LINE) == 0) {
@@ -651,10 +671,12 @@ ngx_http_updown_sync_to_file(ngx_http_request_t *req,
         }
     }
 
+    ngx_shmtx_unlock(&ngx_updown_status_sync_mutex);
     ngx_close_file(fd);
     return NGX_OK;
 
 fail:
+    ngx_shmtx_unlock(&ngx_updown_status_sync_mutex);
     ngx_close_file(fd);
     return NGX_ERROR;
 }
