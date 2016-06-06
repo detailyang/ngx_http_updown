@@ -10,6 +10,7 @@ static ngx_int_t ngx_http_updown_pre_conf(ngx_conf_t *cf);
 static char *ngx_http_updown_updown_default_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static char *ngx_http_updown_down_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static char *ngx_http_updown_up_code_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static char *ngx_http_updown_upstream_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static char *ngx_http_updown_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void *ngx_http_updown_create_loc_conf(ngx_conf_t *cf);
 static ngx_http_updown_loc_conf_t *ngx_http_updown_insert_loc_conf(void *conf);
@@ -59,6 +60,13 @@ static ngx_command_t ngx_http_updown_commands[] = {
     ngx_http_updown_file_set,
     NGX_HTTP_LOC_CONF_OFFSET,
     offsetof(ngx_http_updown_loc_conf_t, updown_file),
+    NULL },
+  {
+    ngx_string("updown_upstream"),
+    NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+    ngx_http_updown_upstream_set,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    offsetof(ngx_http_updown_loc_conf_t, updown_upstream),
     NULL },
   ngx_null_command
 };
@@ -151,6 +159,11 @@ ngx_http_updown_create_loc_conf(ngx_conf_t *cf) {
     if (ulcf == NULL) {
         return NGX_CONF_ERROR;
     }
+
+    /*
+        set by ngx_pcalloc()
+        ulcf->updown_upstream = {0, NULL};
+    */
     ulcf->name.len = NGX_CONF_UNSET_SIZE;
     ulcf->name.data = NGX_CONF_UNSET_PTR;
     ulcf->up_code = NGX_CONF_UNSET;
@@ -161,6 +174,29 @@ ngx_http_updown_create_loc_conf(ngx_conf_t *cf) {
     ulcf->updown_default = NGX_CONF_UNSET;
 
     return ulcf;
+}
+
+static char *
+ngx_http_updown_upstream_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
+    ngx_http_updown_loc_conf_t *ulcf=conf;
+    char *rc;
+
+    rc = ngx_conf_set_str_slot(cf, cmd, conf);
+    if (rc != NGX_CONF_OK) {
+        return rc;
+    }
+
+    ulcf = ngx_http_updown_find_loc_conf(conf);
+    if (ulcf == NULL) {
+        ulcf = ngx_http_updown_insert_loc_conf(conf);
+        if (ulcf == NULL ) {
+            return NGX_CONF_ERROR;
+        }
+    }
+    ulcf->updown_upstream.data = ((ngx_http_updown_loc_conf_t *)conf)->updown_upstream.data;
+    ulcf->updown_upstream.len = ((ngx_http_updown_loc_conf_t *)conf)->updown_upstream.len;
+
+    return rc;
 }
 
 static char *
@@ -461,14 +497,27 @@ ngx_http_updown_handler_get (ngx_http_request_t *req) {
     u_char ngx_response_body[1024] = {0};
     ngx_http_updown_loc_conf_t *ulcf;
     ngx_int_t rc;
+    ngx_uint_t upstream_status = 1;
 
     ulcf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
+    if (ulcf->updown_upstream.len != NGX_CONF_UNSET_SIZE) {
+#if (NGX_HTTP_UPSTREAM_CHECK)
+        upstream_status = !ngx_http_upstream_check_upstream_down(&ulcf->updown_upstream);
+        ngx_log_error(NGX_LOG_ERR, req->connection->log, 0, "[updown] upstream status %d", upstream_status);
+#endif
+    }
+
     if (*(ngx_atomic_int_t *)(ngx_updown_status + CACHE_LINE * (2 * ulcf->index + 1)) == 0) {
         ngx_sprintf(ngx_response_body, "down");
         req->headers_out.status = (ulcf->down_code == NGX_CONF_UNSET ? DEFAULT_DOWN_CODE: ulcf->down_code);
     } else {
-        ngx_sprintf(ngx_response_body, "up");
-        req->headers_out.status = (ulcf->up_code == NGX_CONF_UNSET ? DEFAULT_UP_CODE : ulcf->up_code);
+        if (upstream_status == 0) {
+            ngx_sprintf(ngx_response_body, "down");
+            req->headers_out.status = (ulcf->down_code == NGX_CONF_UNSET ? DEFAULT_DOWN_CODE: ulcf->down_code);
+        } else {
+            ngx_sprintf(ngx_response_body, "up");
+            req->headers_out.status = (ulcf->up_code == NGX_CONF_UNSET ? DEFAULT_UP_CODE : ulcf->up_code);
+        }
     }
     req->headers_out.content_length_n = ngx_strlen(ngx_response_body);;
     ngx_str_set(&req->headers_out.content_type, "text/html");
