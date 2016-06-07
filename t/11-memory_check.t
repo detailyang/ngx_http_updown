@@ -28,7 +28,7 @@ location = /1.updown {
 ["GET /1", "GET /1.updown", "DELETE /1", "POST /1"]
 
 --- response_body eval
-["up", "1", "down", "up"]
+["total:up updown:up upstream:disable", "1", "total:down updown:down upstream:disable", "total:up updown:up upstream:disable"]
 
 --- error_code eval
 [200, 200, 200, 200]
@@ -60,8 +60,8 @@ location = /1.updown {
 ]
 
 --- response_body eval
-["up", "1", "down", "up",
- "up", "1", "down", "up"
+["total:up updown:up upstream:disable", "1", "total:down updown:down upstream:disable", "total:up updown:up upstream:disable",
+ "total:up updown:up upstream:disable", "1", "total:down updown:down upstream:disable", "total:up updown:up upstream:disable"
 ]
 
 --- error_code eval

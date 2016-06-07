@@ -20,7 +20,7 @@ location = /1.updown {
 ["GET /1.updown", "GET /1"]
 
 --- response_body eval
-["1", "up"]
+["1", "total:up updown:up upstream:disable"]
 
 --- error_code eval
 [200, 200]
@@ -40,7 +40,7 @@ location = /1 {
 --- request
 GET /1
 --- response_body eval
-"up"
+"total:up updown:up upstream:disable"
 --- error_code: 200
 
 === TEST 3: updown_file should be down
@@ -57,7 +57,7 @@ location = /1 {
 --- request
 GET /1
 --- response_body eval
-"down"
+"total:down updown:down upstream:disable"
 --- error_code: 500
 
 === TEST 4: updown_file should be down
@@ -74,7 +74,7 @@ location = /1 {
 --- request
 GET /1
 --- response_body eval
-"down"
+"total:down updown:down upstream:disable"
 --- error_code: 500
 
 === TEST 5: updown_file should be created
@@ -135,7 +135,7 @@ location = /1.updown {
 ["GET /1.updown", "GET /1", "POST /1", "GET /1", "GET /1.updown", "DELETE /1", "GET /1", "GET /1.updown"]
 
 --- response_body eval
-["0", "down", "up", "up", "1", "down", "down", "0"]
+["0", "total:down updown:down upstream:disable", "up", "total:up updown:up upstream:disable", "1", "down", "total:down updown:down upstream:disable", "0"]
 
 --- error_code eval
 [200, 500, 200, 200, 200, 200, 500, 200]

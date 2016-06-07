@@ -497,25 +497,41 @@ ngx_http_updown_handler_get (ngx_http_request_t *req) {
     u_char ngx_response_body[1024] = {0};
     ngx_http_updown_loc_conf_t *ulcf;
     ngx_int_t rc;
-    ngx_uint_t upstream_status = 1;
+    ngx_int_t upstream_status = -1; // -1 disable
 
     ulcf = ngx_http_get_module_loc_conf(req, ngx_http_updown_module);
-    if (ulcf->updown_upstream.len != NGX_CONF_UNSET_SIZE) {
+    if (ulcf->updown_upstream.len != NGX_CONF_UNSET_SIZE &&
+        ulcf->updown_upstream.len != 0) {
 #if (NGX_HTTP_UPSTREAM_CHECK)
         upstream_status = !ngx_http_upstream_check_upstream_down(&ulcf->updown_upstream);
         ngx_log_error(NGX_LOG_ERR, req->connection->log, 0, "[updown] upstream status %d", upstream_status);
 #endif
     }
 
+    // body: total: down|updown: down|upstream: up
     if (*(ngx_atomic_int_t *)(ngx_updown_status + CACHE_LINE * (2 * ulcf->index + 1)) == 0) {
-        ngx_sprintf(ngx_response_body, "down");
+        if (upstream_status == -1) {
+            ngx_sprintf(ngx_response_body, "total:down updown:down upstream:disable");
+        } else if (upstream_status == 0) {
+            ngx_sprintf(ngx_response_body, "total:down updown:down upstream:down");
+        } else if (upstream_status == 1){
+            ngx_sprintf(ngx_response_body, "total:down updown:down upstream:up");
+        } else {
+            ngx_sprintf(ngx_response_body, "total:down updown:down upstream:unkonw");
+        }
         req->headers_out.status = (ulcf->down_code == NGX_CONF_UNSET ? DEFAULT_DOWN_CODE: ulcf->down_code);
     } else {
-        if (upstream_status == 0) {
-            ngx_sprintf(ngx_response_body, "down");
+        if (upstream_status == -1) {
+            ngx_sprintf(ngx_response_body, "total:up updown:up upstream:disable");
+            req->headers_out.status = (ulcf->up_code == NGX_CONF_UNSET ? DEFAULT_UP_CODE : ulcf->up_code);
+        } else if (upstream_status == 0) {
+            ngx_sprintf(ngx_response_body, "total:down updown:up upstream:down");
             req->headers_out.status = (ulcf->down_code == NGX_CONF_UNSET ? DEFAULT_DOWN_CODE: ulcf->down_code);
+        } else if (upstream_status == 1) {
+            ngx_sprintf(ngx_response_body, "total:up updown:up upstream:up");
+            req->headers_out.status = (ulcf->up_code == NGX_CONF_UNSET ? DEFAULT_UP_CODE : ulcf->up_code);
         } else {
-            ngx_sprintf(ngx_response_body, "up");
+            ngx_sprintf(ngx_response_body, "total:up updown:up upstream:unkonw");
             req->headers_out.status = (ulcf->up_code == NGX_CONF_UNSET ? DEFAULT_UP_CODE : ulcf->up_code);
         }
     }

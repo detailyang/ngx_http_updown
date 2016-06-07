@@ -14,7 +14,7 @@ location = /1 {
 --- request
 GET /1
 --- response_body eval
-"down"
+"total:down updown:down upstream:disable"
 --- error_code: 201
 
 
@@ -28,5 +28,5 @@ location = /1 {
 --- request
 GET /1
 --- response_body eval
-"down"
+"total:down updown:down upstream:disable"
 --- error_code: 501

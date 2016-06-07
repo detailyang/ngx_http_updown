@@ -49,7 +49,7 @@ location = /2.updown {
 ["GET /1", "GET /2", "GET /3"]
 
 --- response_body eval
-["up", "down", "down"]
+["total:up updown:up upstream:disable", "total:down updown:down upstream:disable", "total:down updown:down upstream:disable"]
 
 --- error_code eval
 [200, 500, 500]
@@ -71,7 +71,7 @@ location = /2.updown {
 ["GET /2"]
 
 --- response_body eval
-["down"]
+["total:down updown:down upstream:disable"]
 
 --- error_code eval
 [500]

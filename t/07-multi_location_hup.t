@@ -52,14 +52,14 @@ location = /3.updown {
 ]
 
 --- response_body eval
-["up", "up", "up",
+["total:up updown:up upstream:disable", "total:up updown:up upstream:disable", "total:up updown:up upstream:disable",
  "down",
- "down", "up", "up",
+ "total:down updown:down upstream:disable", "total:up updown:up upstream:disable", "total:up updown:up upstream:disable",
  "up",
- "down", "up", "down",
- "down", "up", "down",
+ "down", "total:up updown:up upstream:disable", "down",
+ "total:down updown:down upstream:disable", "total:up updown:up upstream:disable", "total:down updown:down upstream:disable",
  "up", "up", "up",
- "up", "up", "up",
+ "total:up updown:up upstream:disable", "total:up updown:up upstream:disable", "total:up updown:up upstream:disable",
 ]
 
 --- error_code eval
