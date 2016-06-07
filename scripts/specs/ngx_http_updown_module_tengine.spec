@@ -1,7 +1,7 @@
 %define     oname   ngx_http_updown_module
-Name:       yz-ngx_http_updown_module
-Version:    0.2.0
-Release:    6%{?dist}
+Name:       ngx_http_updown_module
+Version:    0.2.1
+Release:    7%{?dist}
 Summary:   ngx_http_updown_module is a an addon for Nginx to markup graceful up or down
 
 Group:      Development/Libraries
@@ -42,3 +42,5 @@ rm -rf %{buildroot}
 %changelog
 * May 16 2016 Yang Bingwu  <detailyang@gmail.com>
     upgrade to 0.2.0
+* May 23 2016 Yang Bingwu  <detailyang@gmail.com>
+    upgrade to 0.2.1
