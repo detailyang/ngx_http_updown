@@ -81,8 +81,8 @@ ngx_http_updown requires the following to run:
 
  * [nginx](http://nginx.org/) or other forked version like [openresty](http://openresty.org/)、[tengine](http://tengine.taobao.org/)
  * [nginx_upstream_check_module](https://github.com/detailyang/nginx_upstream_check_module)
- make sure have patched by [@detailyang](https://github.com/detailyang) which expose api to check upstream status or if you using tengine,
-make sure you use the latest version which tengine have merged [@detailyang](https://github.com/detailyang) to expose api.
+ make sure have patched by [@detailyang](https://github.com/detailyang) which expose api to check upstream status or if you are using tengine,
+make sure you use the latest version which tengine have merged [@detailyang](https://github.com/detailyang) patch to expose api.
 
 
 Direction
