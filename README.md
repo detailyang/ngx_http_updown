@@ -194,38 +194,10 @@ upstream local_bar {
 }
 
 server {
-    listen       80 default backlog=65535 rcvbuf=512k;
+    listen       80 default;
 
     charset utf-8;
-    access_log  /data/logs/tengine/default.access.log  main;
-
-    error_page  404              /404.html;
-    error_page  500 502 503 504  /50x.html;
-
-    location / {
-        root   html;
-        index  index.html index.htm;
-        allow  127.0.0.1;
-        allow  10.0.0.0/8;
-        deny   all;
-    }
-
-    location = /50x.html {
-        root   html;
-    }
-
-    location /nginx_status {
-             stub_status             on;
-             access_log              off;
-             allow   127.0.0.1;
-             allow  10.0.0.0/8;
-             deny    all;
-    }
-
-    location = /traffic_status {
-        req_status_show;
-    }
-
+    
     location = /hc {
         updown default;
         down_code 404;
