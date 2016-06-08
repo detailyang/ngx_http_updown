@@ -217,7 +217,7 @@ server {
 Contributing
 ------------
 
-To contribute to ngx_http_updown, clone this repo locally and commit your code on a separate branch.
+To contribute to ngx_http_updown, clone this repo locally and commit your code on a separate branch.           
 PS: PR Welcome :rocket: :rocket: :rocket: :rocket:
 
 
