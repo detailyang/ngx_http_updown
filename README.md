@@ -22,7 +22,7 @@ For example:
 ```bash
 location /hc {
   updown default;
-  updown_code 200;
+  up_code 200;
   down_code 500;
   updown_file /data/updown/default.updown; # persistence
   updown_upstream default; # check upstream status
