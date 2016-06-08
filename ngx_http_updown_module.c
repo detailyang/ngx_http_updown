@@ -504,7 +504,9 @@ ngx_http_updown_handler_get (ngx_http_request_t *req) {
         ulcf->updown_upstream.len != 0) {
 #if (NGX_HTTP_UPSTREAM_CHECK)
         upstream_status = !ngx_http_upstream_check_upstream_down(&ulcf->updown_upstream);
-        ngx_log_error(NGX_LOG_ERR, req->connection->log, 0, "[updown] upstream status %d", upstream_status);
+        ngx_log_error(NGX_LOG_DEBUG, req->connection->log, 0, "[updown] upstream status %d", upstream_status);
+#else
+        ngx_log_error(NGX_LOG_ERR, req->connection->log, 0, "[updown] NGX_HTTP_UPSTREAM_CHECK not found");
 #endif
     }
 
