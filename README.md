@@ -24,23 +24,53 @@ location /hc {
   updown default;
   updown_code 200;
   down_code 500;
+  updown_file /data/updown/default.updown; # persistence
+  updown_upstream default; # check upstream status
 }
 
+There are two factors to determine /hc return up or down
 
-1. when nginx is 'online'
-  GET /hc, return 200
+1. updown status: control by user
+2. upstream status control by upstream_check_status
 
-2. now ready to offline nginx
-  DELETE /hc, if success return 200
 
-3. now check the nginx 'status'
-  GET /hc, return 500
+There are two scene to use updown
 
-4. now ready to online nginx
-  POST /hc, if success return 200
+1. want to offline the nginx
+2. auto offline the nginx if upstream is down
 
-5. now check the nginx 'status'
-  GET /hc, return 200
+default result as following:
+
+```bash
+total:up updown:up upstream:up
+```
+
+let's begin to enum what will happen on nginx runtime.
+
+if upstream is down, it will return down whatever updown status as following:
+
+```bash
+total:down updown:up upstream:down
+total:down updown:down upstream:down
+```
+
+if upstream is up, it will return up when updown is up only as following:
+
+```bash
+total:up updown:up upstream:up
+total:down updown:down upstream:up
+```
+
+So the common op is offline and online nginx, it's easy just send DELETE and POST method.
+
+```bash
+curl -X DELETE http://127.0.0.1/hc
+curl -X GET http://127.0.0.1/hc
+total:down updown:down upstream:up
+
+curl -X POST http://127.0.0.1/hc
+curl -X GET http://127.0.0.1/hc
+total:up updown:up upstream:up
 ```
 
 Requirements
@@ -49,7 +79,9 @@ Requirements
 ngx_http_updown requires the following to run:
 
  * [nginx](http://nginx.org/) or other forked version like [openresty](http://openresty.org/)、[tengine](http://tengine.taobao.org/)
- * [nginx_upstream_check_module](https://github.com/yaoweibin/nginx_upstream_check_module)
+ * [nginx_upstream_check_module](https://github.com/detailyang/nginx_upstream_check_module)
+ make sure have patched by [@detailyang](https://github.com/detailyang) which expose api to check upstream status or if you using tengine,
+make sure you use the latest version which tengine have merged [@detailyang](https://github.com/detailyang) to expose api.
 
 
 Direction
@@ -101,7 +133,21 @@ Context:    location
 
 location /hc {
   updown default;
-  updown_file /data/updown/default.updown
+  updown_file /data/updown/default.updown;
+}
+
+```
+
+* updown_upstream
+
+```
+Syntax:     updown_upstream upstream_name;
+Default:    -
+Context:    location
+
+location /hc {
+  updown default;
+  updown_upstream default;
 }
 
 ```
@@ -123,13 +169,29 @@ upstream app_xx {
     server xx:80 max_fails=0 weight=100;
     check interval=1000 rise=5 fall=5 timeout=1000 type=http default_down=false;
     check_http_send "GET /hc HTTP/1.0\r\nConnection: keep-alive\r\n\r\n";
-    check_http_expect_alive http_2xx ;
+    check_http_expect_alive http_2xx;
 }
 ```
 
 and enable the the updown module on the backend nginx as follow:
 
 ```
+upstream local_foo {
+    keepalive 64;
+    server 127.0.0.1:8000  max_fails=0 weight=100;
+    check interval=1000 rise=5 fall=5 timeout=1000 type=http default_down=false;
+    check_http_send "GET /hc HTTP/1.0\r\nConnection: keep-alive\r\n\r\n";
+    check_http_expect_alive http_2xx ;
+}
+
+upstream local_bar {
+    keepalive 64;
+    server 127.0.0.1:9000 max_fails=0 weight=100;
+    check interval=1000 rise=5 fall=5 timeout=1000 type=http default_down=false;
+    check_http_send "GET /hc HTTP/1.0\r\nConnection: keep-alive\r\n\r\n";
+    check_http_expect_alive http_2xx ;
+}
+
 server {
     listen       80 default backlog=65535 rcvbuf=512k;
 
@@ -167,12 +229,14 @@ server {
         updown default;
         down_code 404;
         updown_file /data/updown/default.updown;
+        updown_upstream local_foo;
     }
 
     location = /anotherhc {
         updown another;
         down_code 404;
         updown_file /data/updown/another.updown;
+        updown_upstream local_bar;
     }
 }
 ```
