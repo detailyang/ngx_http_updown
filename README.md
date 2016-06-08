@@ -27,6 +27,7 @@ location /hc {
   updown_file /data/updown/default.updown; # persistence
   updown_upstream default; # check upstream status
 }
+```
 
 There are two factors to determine /hc return up or down
 
