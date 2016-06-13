@@ -1,3 +1,11 @@
+## 0.3.2 (2016-06-13)
+Feature:
+  - support nginx dynamic module compile
+
+## 0.3.1 (2016-06-08)
+Feature:
+  - README.md update
+
 ## 0.3.0 (2016-06-08)
 Feature:
   - add new directive updown_upstream to check upstream status @detailyang
@@ -6,7 +14,6 @@ Feature:
 
 Fix:
   - add lock when write to file in multi workers @detailyang
-
 
 ## 0.2.0 (2016-05-16)
 
