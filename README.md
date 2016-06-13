@@ -1,7 +1,7 @@
 # nginx http updown module
 ![Branch master](https://img.shields.io/badge/branch-master-brightgreen.svg?style=flat-square)[![Build](https://api.travis-ci.org/detailyang/ngx_http_updown.svg)](https://travis-ci.org/detailyang/ngx_http_updown)[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/detailyang/ngx_http_updown/master/LICENSE)[![release](https://img.shields.io/github/release/detailyang/ngx_http_updown.svg)](https://github.com/detailyang/ngx_http_updown/releases)
 
-ngx_http_updown_module is a an addon for Nginx to graceful up or down
+ngx_http_updown_module is a an addon for nginx to graceful up or down
 Table of Contents
 -----------------
 * [How-To-Work](#how-to-work)
@@ -22,7 +22,7 @@ For example:
 ```bash
 location /hc {
   updown default;
-  updown_code 200;
+  up_code 200;
   down_code 500;
   updown_file /data/updown/default.updown; # persistence
   updown_upstream default; # check upstream status
@@ -82,7 +82,7 @@ ngx_http_updown requires the following to run:
  * [nginx](http://nginx.org/) or other forked version like [openresty](http://openresty.org/)、[tengine](http://tengine.taobao.org/)
  * [nginx_upstream_check_module](https://github.com/detailyang/nginx_upstream_check_module)
  make sure have patched by [@detailyang](https://github.com/detailyang) which expose api to check upstream status or if you are using tengine,
-make sure you use the latest version which tengine have merged [@detailyang](https://github.com/detailyang) patch to expose api.
+make sure you use the latest version which [tengine](https://github.com/alibaba/tengine/pull/741) have merged [@detailyang](https://github.com/detailyang) patch to expose api.
 
 
 Direction
