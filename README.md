@@ -1,4 +1,4 @@
-# Move to [nginx-lover/ngx_http_updown](https://github.com/nginx-lover/ngx_http_updown)
+# Move to [x-v8/ngx_http_updown](https://github.com/x-v8/ngx_http_updown)
 # nginx http updown module
 ![Branch master](https://img.shields.io/badge/branch-master-brightgreen.svg?style=flat-square)[![Build](https://api.travis-ci.org/detailyang/ngx_http_updown.svg)](https://travis-ci.org/detailyang/ngx_http_updown)[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/detailyang/ngx_http_updown/master/LICENSE)[![release](https://img.shields.io/github/release/detailyang/ngx_http_updown.svg)](https://github.com/detailyang/ngx_http_updown/releases)
 
